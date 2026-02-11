@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <menuitem id="menu_manufacturing_root" name="Cost Calculator-Manufacturing" web_icon="feed_cost_estimation,static/description/icon2.png"/>
+
+    <!-- <menuitem id="menu_feed_root" name="Feed Cost" parent="menu_manufacturing_root" sequence="10"/> -->
+
+    <menuitem id="menu_feed_estimation" name="Estimations" parent="menu_manufacturing_root" sequence="5"/>
+    <menuitem id="menu_feed_formula" name="Formulas" parent="menu_manufacturing_root" sequence="10"/>
+    <menuitem id="menu_feed_config" name="Configuration" parent="menu_manufacturing_root" sequence="20"/>
+  </data>
+</odoo>

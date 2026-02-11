@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="report_feed_estimation_template">
+    <t t-call="web.html_container">
+      <t t-foreach="docs" t-as="o">
+        <div class="page">
+          <h2>Feed Cost Estimation - <t t-esc="o.name"/></h2>
+          <p>Date: <t t-esc="o.date"/></p>
+
+          <h3>Inputs</h3>
+          <table class="table table-sm">
+            <tr><td>Formula</td><td><t t-esc="o.formula_id.name"/></td></tr>
+            <tr><td>Daily Produced (Q)</td><td><t t-esc="o.total_quintal_daily"/></td></tr>
+            <tr><td>Annual working days</td><td><t t-esc="o.annual_working_days"/></td></tr>
+            <tr><td>Labor Salary (Monthly)</td><td><t t-esc="o.labor_salary_monthly"/></td></tr>
+            <tr><td>Machine Price</td><td><t t-esc="o.machine_price"/></td></tr>
+            <tr><td>Loan Amount</td><td><t t-esc="o.loan_amount"/></td></tr>
+            <tr><td>Interest Rate (%)</td><td><t t-esc="o.interest_rate"/></td></tr>
+            <tr><td>Last 10m R&amp;M Total</td><td><t t-esc="o.last_10m_rm_total"/></td></tr>
+            <tr><td>Loading Cost / Q (input)</td><td><t t-esc="o.loading_cost_per_quintal_input"/></td></tr>
+          </table>
+
+          <h3>Materials</h3>
+          <table class="table table-sm">
+            <thead>
+              <tr><th>Type</th><th>Name</th><th>Input KG</th><th>Price/KG</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              <t t-foreach="o.line_ids" t-as="l">
+                <tr>
+                  <td><t t-esc="l.type"/></td>
+                  <td><t t-esc="l.name"/></td>
+                  <td><t t-esc="l.input_kg"/></td>
+                  <td><t t-esc="l.price_per_kg"/></td>
+                  <td><t t-esc="l.total_cost"/></td>
+                </tr>
+              </t>
+            </tbody>
+          </table>
+
+          <h3>Summary (Per Quintal)</h3>
+          <table class="table table-sm">
+            <tr><td>Raw Material Total (adjusted for 2% waste)</td><td><t t-esc="o.raw_material_total"/></td></tr>
+            <tr><td>Fuel Total</td><td><t t-esc="o.fuel_total"/></td></tr>
+            <tr><td>Packing Material Total</td><td><t t-esc="o.packing_material_total"/></td></tr>
+            <tr><td>Labor / Q</td><td><t t-esc="o.labor_cost_per_quintal"/></td></tr>
+            <tr><td>Depreciation / Q</td><td><t t-esc="o.depreciation_per_quintal"/></td></tr>
+            <tr><td>Interest / Q</td><td><t t-esc="o.interest_per_quintal"/></td></tr>
+            <tr><td>Other / Q</td><td><t t-esc="o.other_cost_per_quintal"/></td></tr>
+            <tr><td>Monthly Loading Cost</td><td><t t-esc="o.monthly_loading_cost"/></td></tr>
+            <tr><td>Daily Loading Cost</td><td><t t-esc="o.daily_loading_cost"/></td></tr>
+            <tr><td>Loading / Q</td><td><t t-esc="o.loading_cost_per_quintal"/></td></tr>
+            <tr><td><strong>Total Cost / Q</strong></td><td><strong><t t-esc="o.total_cost_per_quintal"/></strong></td></tr>
+          </table>
+        </div>
+      </t>
+    </t>
+  </template>
+
+  <template id="report_feed_estimation_template_wrapper">
+    <t t-call="web.html_container">
+      <t t-call="feed_cost_estimation.report_feed_estimation_template"/>
+    </t>
+  </template>
+</odoo>

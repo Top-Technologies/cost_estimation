@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_feed_config,access_feed_config,model_feed_config,feed_cost_estimation.group_feed_manager,1,1,1,1
+access_feed_formula,access_feed_formula,model_feed_formula,feed_cost_estimation.group_feed_user,1,1,1,1
+access_feed_formula_line,access_feed_formula_line,model_feed_formula_line,feed_cost_estimation.group_feed_user,1,1,1,1
+access_feed_estimation,access_feed_estimation,model_feed_estimation,feed_cost_estimation.group_feed_user,1,1,1,1
+access_feed_line,access_feed_line,model_feed_estimation_line,feed_cost_estimation.group_feed_user,1,1,1,1

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_feed_formula_tree" model="ir.ui.view">
+    <field name="name">feed.formula.tree</field>
+    <field name="model">feed.formula</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="name"/>
+        <field name="code"/>
+        <field name="active"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="view_feed_formula_form" model="ir.ui.view">
+    <field name="name">feed.formula.form</field>
+    <field name="model">feed.formula</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="code"/>
+            <field name="description"/>
+            <field name="active"/>
+            <field name="company_id"/>
+          </group>
+          <notebook>
+            <page string="Components">
+              <field name="line_ids">
+                <list editable="bottom" default_order="sequence" decoration-bf="1">
+                  <field name="company_currency_id" column_invisible="True"/>
+                  <field name="sequence" widget="handle"/>
+                  <field name="type"/>
+                  <field name="name"/>
+                  <field name="input_kg"/>
+                  <field name="price_per_kg"/>
+                  <field name="total_cost" sum="Total Cost"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter>
+            <field name="message_follower_ids"/>
+            <field name="activity_ids"/>
+            <field name="message_ids"/>
+        </chatter>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_feed_formula" model="ir.actions.act_window">
+    <field name="name">Formulas</field>
+    <field name="res_model">feed.formula</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <menuitem id="menu_feed_formula_action" name="Formulas" parent="menu_feed_formula" action="action_feed_formula"/>
+</odoo>

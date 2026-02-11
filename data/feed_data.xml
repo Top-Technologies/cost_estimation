@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="0">
+    <record id="feed_sequence_estimation" model="ir.sequence">
+      <field name="name">Feed Estimation</field>
+      <field name="code">feed.estimation</field>
+      <field name="prefix">FE</field>
+      <field name="padding">4</field>
+    </record>
+
+    <!-- default formulas -->
+    <record id="formula_layer" model="feed.formula">
+      <field name="name">Layer Chicken Feed</field>
+      <field name="code">LAYER</field>
+      <field name="description">Default layer feed formula template.</field>
+    </record>
+  </data>
+</odoo>
