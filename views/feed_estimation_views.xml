@@ -24,7 +24,9 @@
           <group>
             <field name="name"/>
             <field name="formula_id"/>
+            <field name="config_id"/>
             <field name="date"/>
+            <!-- <field name="company_id"/> -->
             <field name="state"/>
           </group>
 

@@ -25,15 +25,31 @@ class FeedConfig(models.Model):
         string='Interest Rate (annual %)', default=0.0, tracking=True)
     allow_config_edit_group_id = fields.Many2one(
         'res.groups', string='Group who can edit', tracking=True)
-    _sql_constraints = [
-        ('company_uniq', 'unique(company_id)',
-         'Configuration for this company already exists.'),
-    ]
+    is_default = fields.Boolean(string='Default')
+    # _sql_constraints = [
+    #     ('company_uniq', 'unique(company_id)',
+    #      'Configuration for this company already exists.'),
+    # ]
 
     @api.model
-    def get_config(self):
+    def get_config(self, company):
+        """
+        Get feed configuration for given company.
+        Auto-create if not exists.
+        """
+
+        if not company:
+            company = self.env.company
+
         config = self.search(
-            [('company_id', '=', self.env.company.id)], limit=1)
+            [('company_id', '=', company.id)],
+            limit=1
+        )
+
         if not config:
-            config = self.create({'company_id': self.env.company.id})
+            config = self.create({
+                'company_id': company.id,
+                'name': company.name + ' Configuration'
+            })
+
         return config

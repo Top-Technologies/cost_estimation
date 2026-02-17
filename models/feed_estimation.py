@@ -13,6 +13,12 @@ class FeedEstimation(models.Model):
                        copy=False, default='New')
     formula_id = fields.Many2one(
         'feed.formula', string='Formula', required=True)
+    config_id = fields.Many2one(
+        'feed.config',
+        string='Configuration',
+        required=True,
+        tracking=True
+    )
     company_id = fields.Many2one(
         'res.company', string='Company', default=lambda self: self.env.company)
     currency_id = fields.Many2one(
@@ -82,15 +88,18 @@ class FeedEstimation(models.Model):
         records = super().create(vals_list)
         for rec in records:
             # copy defaults from config
-            config = self.env['feed.config'].get_config()
-            rec.total_quintal_daily = rec.total_quintal_daily or config.daily_produced_q
-            rec.annual_working_days = rec.annual_working_days or config.annual_working_days
-            rec.monthly_working_days = rec.monthly_working_days or config.monthly_working_days
-            rec.interest_rate = rec.interest_rate or config.interest_rate_percent
-            rec.machine_price = rec.machine_price or config.machine_price_config
+            config = rec.config_id
+
+            if config:
+                rec.total_quintal_daily = rec.total_quintal_daily or config.daily_produced_q
+                rec.annual_working_days = rec.annual_working_days or config.annual_working_days
+                rec.monthly_working_days = rec.monthly_working_days or config.monthly_working_days
+                rec.interest_rate = rec.interest_rate or config.interest_rate_percent
+                rec.machine_price = rec.machine_price or config.machine_price_config
+
             if rec.name == 'New':
-                rec.name = self.env['ir.sequence'].sudo().next_by_code(
-                    'feed.estimation') or 'FEST/' + fields.Date.today().strftime('%Y%m%d')
+                rec.name = self.env['ir.sequence'].next_by_code('feed.estimation') or '/'
+                
             # If formula has components and estimation has no manual lines, populate lines from formula (copy)
             if rec.formula_id and not rec.line_ids:
                 lines_to_create = []
@@ -124,15 +133,35 @@ class FeedEstimation(models.Model):
 
 
 
-    @api.onchange('formula_id')
+    @api.onchange('config_id')
     def _onchange_load_config(self):
-        config = self.env['feed.config'].get_config()
 
-        self.total_quintal_daily = config.daily_produced_q
-        self.annual_working_days = config.annual_working_days
-        self.monthly_working_days = config.monthly_working_days
-        self.interest_rate = config.interest_rate_percent
-        self.machine_price = config.machine_price_config
+        for rec in self:
+            if rec.config_id:
+
+                config = rec.config_id
+
+                rec.total_quintal_daily = config.daily_produced_q
+                rec.annual_working_days = config.annual_working_days
+                rec.monthly_working_days = config.monthly_working_days
+                rec.interest_rate = config.interest_rate_percent
+                rec.machine_price = config.machine_price_config
+
+    @api.model
+    def default_get(self, fields_list):
+
+        res = super().default_get(fields_list)
+
+        config = self.env['feed.config'].search(
+            [('is_default', '=', True)],
+            limit=1
+        )
+
+        if config:
+            res['config_id'] = config.id
+
+        return res
+
 
     @api.depends('line_ids.total_cost', 'labor_salary_monthly', 'machine_price', 'loan_amount', 'interest_rate', 'last_10m_rm_total', 'total_quintal_daily', 'annual_working_days', 'monthly_working_days', 'loading_cost_per_quintal_input')
     def _compute_totals(self):
@@ -161,7 +190,7 @@ class FeedEstimation(models.Model):
             rec.labor_cost_per_quintal = labor_per_q
 
             # Depreciation
-            config = self.env['feed.config'].get_config()
+            config = rec.config_id
             dep_percent = (config.depreciation_percent or 20.0) / 100.0
             total_depr_amount = (rec.machine_price or 0.0) * dep_percent
             annual_produced_q = self._get_annual_produced_quintal(rec) or 1.0
