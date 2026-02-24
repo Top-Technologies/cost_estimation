@@ -29,7 +29,7 @@ class FeedEstimation(models.Model):
 
     # configurable but copied from config on create
     total_quintal_daily = fields.Float(
-        string='Daily Produced (Quintal)', default=170.0)
+        string='Daily Produced', default=170.0)
     annual_working_days = fields.Integer(
         string='Annual Working Days', default=313)
     monthly_working_days = fields.Integer(
@@ -80,6 +80,30 @@ class FeedEstimation(models.Model):
     total_cost_per_quintal = fields.Float(
         string='Total Cost / Quintal', compute='_compute_totals', store=True)
 
+    # Selling Margin Analysis
+    margin_percent = fields.Float(
+        string='Target Margin (%)',
+        default=0.0
+    )
+
+    cost_for_margin = fields.Float(
+        string='Total Cost',
+        compute='_compute_margin_analysis',
+        store=True
+    )
+
+    profit_amount = fields.Float(
+        string='Profit Amount',
+        compute='_compute_margin_analysis',
+        store=True
+    )
+
+    selling_price = fields.Float(
+        string='Selling Price',
+        compute='_compute_margin_analysis',
+        store=True
+    )
+
     def _get_annual_produced_quintal(self, rec):
         return (rec.total_quintal_daily or 0.0) * (rec.annual_working_days or 1)
 
@@ -95,7 +119,11 @@ class FeedEstimation(models.Model):
                 rec.annual_working_days = rec.annual_working_days or config.annual_working_days
                 rec.monthly_working_days = rec.monthly_working_days or config.monthly_working_days
                 rec.interest_rate = rec.interest_rate or config.interest_rate_percent
+                rec.labor_salary_monthly = rec.labor_salary_monthly or config.labor_salary_monthly_config
                 rec.machine_price = rec.machine_price or config.machine_price_config
+                rec.loan_amount = rec.loan_amount or config.loan_amount_config
+                rec.last_10m_rm_total = rec.last_10m_rm_total or config.last_10m_rm_total_config
+                rec.loading_cost_per_quintal_input = rec.loading_cost_per_quintal_input or config.loading_cost_per_quintal_input_config
 
             if rec.name == 'New':
                 rec.name = self.env['ir.sequence'].next_by_code('feed.estimation') or '/'
@@ -146,6 +174,11 @@ class FeedEstimation(models.Model):
                 rec.monthly_working_days = config.monthly_working_days
                 rec.interest_rate = config.interest_rate_percent
                 rec.machine_price = config.machine_price_config
+                rec.labor_salary_monthly = config.labor_salary_monthly_config
+                rec.loan_amount = config.loan_amount_config
+                rec.last_10m_rm_total = config.last_10m_rm_total_config
+                rec.loading_cost_per_quintal_input = config.loading_cost_per_quintal_input_config
+
 
     @api.model
     def default_get(self, fields_list):
@@ -237,6 +270,29 @@ class FeedEstimation(models.Model):
             total_per_q = (rm_pack_fuel_per_q or 0.0) + (rec.labor_cost_per_quintal or 0.0) + (rec.depreciation_per_quintal or 0.0) + (rec.interest_per_quintal or 0.0) + (rec.other_cost_per_quintal or 0.0) + (rec.loading_cost_per_quintal or 0.0)
             rec.total_cost_per_quintal = total_per_q
             rec.total_cost_per_quintal = total_per_q
+    @api.depends('total_cost_per_quintal', 'margin_percent')
+    def _compute_margin_analysis(self):
+        for rec in self:
+
+            cost = rec.total_cost_per_quintal or 0.0
+            margin = (rec.margin_percent or 0.0) / 100.0
+
+            rec.cost_for_margin = cost
+
+            if margin >= 1:
+                rec.profit_amount = 0.0
+                rec.selling_price = 0.0
+                continue
+
+            if margin > 0:
+                selling = cost * (1 + margin)
+                profit = selling - cost
+            else:
+                selling = cost
+                profit = 0.0
+
+            rec.profit_amount = profit
+            rec.selling_price = selling
 
     def action_compute(self):
         for rec in self:

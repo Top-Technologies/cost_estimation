@@ -8,11 +8,15 @@
         <field name="name"/>
         <field name="company_id"/>
         <field name="daily_produced_q"/>
-        <field name="annual_working_days"/>
-        <field name="monthly_working_days"/>
-        <field name="machine_price_config"/>
-        <field name="depreciation_percent"/>
-        <field name="interest_rate_percent"/>
+        <field name="annual_working_days" optional="hide"/>
+        <field name="labor_salary_monthly_config" optional="hide"/>
+        <field name="loan_amount_config"/>
+        <field name="last_10m_rm_total_config" optional="hide"/>
+        <field name="loading_cost_per_quintal_input_config" optional="hide"/>
+        <field name="monthly_working_days" optional="hide"/>
+        <field name="machine_price_config" optional="hide"/>
+        <field name="depreciation_percent" optional="hide"/>
+        <field name="interest_rate_percent" optional="hide"/>
       </list>
     </field>
   </record>
@@ -28,9 +32,13 @@
             <field name="daily_produced_q"/>
             <field name="annual_working_days"/>
             <field name="monthly_working_days"/>
+            <field name="labor_salary_monthly_config"/>
             <field name="machine_price_config"/>
             <field name="depreciation_percent"/>
             <field name="interest_rate_percent"/>
+            <field name="loan_amount_config"/>
+            <field name="last_10m_rm_total_config"/>
+            <field name="loading_cost_per_quintal_input_config"/>
             <field name="allow_config_edit_group_id"/>
           </group>
         </sheet>

@@ -1,5 +1,5 @@
 {
-    'name': 'Animal Feed Cost Estimation',
+    'name': 'Cost Estimation',
     'version': '1.0.0',
     'category': 'Manufacturing',
     'author': 'Natnael Yonas',

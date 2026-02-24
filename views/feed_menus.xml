@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <data>
-    <menuitem id="menu_manufacturing_root" name="Cost Calculator-Manufacturing" web_icon="feed_cost_estimation,static/description/icon2.png"/>
+    <menuitem id="menu_manufacturing_root" name="Cost Estimation" web_icon="feed_cost_estimation,static/description/icon2.png"/>
 
     <!-- <menuitem id="menu_feed_root" name="Feed Cost" parent="menu_manufacturing_root" sequence="10"/> -->
 

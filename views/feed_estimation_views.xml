@@ -10,6 +10,9 @@
         <field name="formula_id"/>
         <field name="date"/>
         <field name="total_cost_per_quintal"/>
+        <field name="margin_percent" optional="show"/>
+        <field name="profit_amount" optional="show"/>
+        <field name="selling_price" optional="show"/>
         <field name="state"/>
       </list>
     </field>
@@ -48,12 +51,12 @@
                 <field name="total_quintal_daily" readonly="1"/>
                 <field name="annual_working_days" readonly="1"/>
                 <field name="monthly_working_days" readonly="1"/>
-                <field name="labor_salary_monthly"/>
+                <field name="labor_salary_monthly" readonly="1"/>
                 <field name="machine_price" readonly="1"/>
-                <field name="loan_amount"/>
+                <field name="loan_amount" readonly="1"/>
                 <field name="interest_rate" readonly="1"/>
-                <field name="last_10m_rm_total"/>
-                <field name="loading_cost_per_quintal_input"/>
+                <field name="last_10m_rm_total" readonly="1"/>
+                <field name="loading_cost_per_quintal_input" readonly="1"/>
               </group>
             </page>
             <page string="Summary">
@@ -69,6 +72,14 @@
                 <field name="daily_loading_cost" readonly="1"/>
                 <field name="loading_cost_per_quintal" readonly="1"/>
                 <field name="total_cost_per_quintal" readonly="1"/>
+              </group>
+            </page>
+            <page string="Selling Margin Analysis">
+              <group>
+                <field name="cost_for_margin" readonly="1"/>
+                <field name="margin_percent"/>
+                <field name="profit_amount" readonly="1"/>
+                <field name="selling_price" readonly="1"/>
               </group>
             </page>
           </notebook>
