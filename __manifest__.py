@@ -4,11 +4,11 @@
     'category': 'Manufacturing',
     'author': 'Natnael Yonas',
     'summary': 'Estimate cost per quintal for animal feed (layer, broiler).',
-    'description': 'Manual feed cost estimation module porting Excel logic to Odoo 17.',
+    'description': 'Manual feed cost estimation module porting Excel logic to Odoo .',
     'depends': ['base', 'product', 'account', 'mail'],
 
-    'icon': 'static/description/icon2.png',
-    # 'images': ['static/description/icon2.png'],
+    # 'icon': 'static/description/icon.png',
+    # 'images': ['static/description/icon.png'],
 
     'data': [
         'security/security.xml',
