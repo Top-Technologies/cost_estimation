@@ -134,7 +134,7 @@ class FeedEstimation(models.Model):
                 for fl in rec.formula_id.line_ids:
                     lines_to_create.append((0, 0, {
                         'type': fl.type,
-                        'name': fl.name,
+                        'product_id': fl.product_id.id,
                         'input_kg': fl.input_kg,
                         'price_per_kg': fl.price_per_kg,
                     }))
@@ -153,7 +153,7 @@ class FeedEstimation(models.Model):
                 for fl in rec.formula_id.line_ids:
                     lines_to_set.append((0, 0, {
                         'type': fl.type,
-                        'name': fl.name,
+                        'product_id': fl.product_id.id,
                         'input_kg': fl.input_kg,
                         'price_per_kg': fl.price_per_kg,
                     }))

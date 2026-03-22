@@ -7,7 +7,11 @@ class FeedEstimationLine(models.Model):
 
     estimation_id = fields.Many2one('feed.estimation', string='Estimation', ondelete='cascade', required=True)
     type = fields.Selection([('raw','Raw Material'), ('pack','Packing Material'), ('fuel','Fuel')], default='raw', required=True)
-    name = fields.Char(string='Material Name', required=True)
+    product_id = fields.Many2one(
+        'product.product',
+        string='Component',
+        required=True
+    )
     input_kg = fields.Float(string='Input (KG)', digits='Product Unit of Measure', default=0.0)
     price_per_kg = fields.Float(string='Price per KG', digits='Product Price', default=0.0)
     total_cost = fields.Monetary(string='Total Cost', compute='_compute_total_cost', store=True, currency_field='company_currency_id')

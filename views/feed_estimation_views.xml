@@ -39,7 +39,7 @@
                 <list editable="bottom">
                   <field name="company_currency_id" column_invisible="True"/>
                   <field name="type"/>
-                  <field name="name"/>
+                  <field name="product_id"/>
                   <field name="input_kg"/>
                   <field name="price_per_kg"/>
                   <field name="total_cost" sum="Total Cost"/>
