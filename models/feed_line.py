@@ -18,6 +18,30 @@ class FeedEstimationLine(models.Model):
 
     company_currency_id = fields.Many2one('res.currency', string='Currency', related='estimation_id.currency_id', readonly=True)
 
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        """When product is selected, fetch its unit and price from product master data"""
+        for line in self:
+            if line.product_id:
+                # Fetch from product template
+                product_template = line.product_id.product_tmpl_id
+                
+                # Get default unit from product (assuming KG is the unit)
+                # You can modify this based on your product UOM configuration
+                if product_template.uom_id:
+                    # Convert to KG if needed
+                    line.input_kg = line.product_id.uom_id._compute_quantity(1.0, product_template.uom_po_id)
+                else:
+                    line.input_kg = 1.0
+                
+                # Get standard price from product
+                if product_template.list_price:
+                    line.price_per_kg = product_template.list_price
+                elif product_template.standard_price:
+                    line.price_per_kg = product_template.standard_price
+                else:
+                    line.price_per_kg = 0.0
+
     @api.depends('input_kg', 'price_per_kg')
     def _compute_total_cost(self):
         for line in self:

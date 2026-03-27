@@ -27,9 +27,26 @@ class FeedFormulaLine(models.Model):
     
     @api.onchange('product_id')
     def _onchange_product(self):
-        for rec in self:
-            if rec.product_id:
-                rec.price_per_kg = rec.product_id.standard_price or 0.0
+        for line in self:
+            if line.product_id:
+                # Fetch from product template
+                product_template = line.product_id.product_tmpl_id
+                
+                # Get default unit from product (assuming KG is the unit)
+                # You can modify this based on your product UOM configuration
+                if product_template.uom_id:
+                    # Convert to KG if needed
+                    line.input_kg = line.product_id.uom_id._compute_quantity(1.0, product_template.uom_po_id)
+                else:
+                    line.input_kg = 1.0
+                
+                # Get standard price from product
+                if product_template.list_price:
+                    line.price_per_kg = product_template.list_price
+                elif product_template.standard_price:
+                    line.price_per_kg = product_template.standard_price
+                else:
+                    line.price_per_kg = 0.0
                 
 
 
