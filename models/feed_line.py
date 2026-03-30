@@ -34,13 +34,14 @@ class FeedEstimationLine(models.Model):
                 else:
                     line.input_kg = 1.0
                 
-                # Get standard price from product
-                if product_template.list_price:
-                    line.price_per_kg = product_template.list_price
-                elif product_template.standard_price:
-                    line.price_per_kg = product_template.standard_price
+                # Get purchase price from product's supplier information
+                # Look for the most recent vendor price
+                seller = line.product_id.seller_ids[0] if line.product_id.seller_ids else False
+                if seller and seller.price:
+                    line.price_per_kg = seller.price
                 else:
-                    line.price_per_kg = 0.0
+                    # Fallback to standard cost price if no seller price found
+                    line.price_per_kg = product_template.standard_price or 0.0
 
     @api.depends('input_kg', 'price_per_kg')
     def _compute_total_cost(self):
