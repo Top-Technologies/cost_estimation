@@ -41,11 +41,6 @@ class FeedFormulaLine(models.Model):
                 else:
                     line.input_kg = 1.0
                 
-                # Get purchase price from product's supplier information
-                # Look for the most recent vendor price
-                seller = line.product_id.seller_ids[0] if line.product_id.seller_ids else False
-                if seller and seller.price:
-                    line.price_per_kg = seller.price
-                else:
-                    # Fallback to standard cost price if no seller price found
-                    line.price_per_kg = product_template.standard_price or 0.0
+                # Get cost price from product template cost field (standard_price)
+                # This is the "Value of the product (automatically computed in AVCO)"
+                line.price_per_kg = product_template.standard_price or 0.0
