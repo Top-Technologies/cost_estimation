@@ -12,7 +12,7 @@ class FeedEstimation(models.Model):
     name = fields.Char(string='Reference', required=True,
                        copy=False, default='New')
     formula_id = fields.Many2one(
-        'feed.formula', string='Formula', required=True)
+        'feed.formula', string='Formula', required=True, tracking=True)
     config_id = fields.Many2one(
         'feed.config',
         string='Configuration',
@@ -57,7 +57,7 @@ class FeedEstimation(models.Model):
         string='Daily Loading Cost', compute='_compute_totals', store=True, currency_field='currency_id')
 
     line_ids = fields.One2many(
-        'feed.estimation.line', 'estimation_id', string='Materials')
+        'feed.estimation.line', 'estimation_id', string='Materials', tracking=True)
     
     # fuel total
     fuel_total = fields.Monetary(string='Fuel Total', compute='_compute_totals', store=True, currency_field='currency_id')
@@ -111,19 +111,20 @@ class FeedEstimation(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         for rec in records:
-            # copy defaults from config
+            # copy defaults from config - override defaults with config values
             config = rec.config_id
 
             if config:
-                rec.total_quintal_daily = rec.total_quintal_daily or config.daily_produced_q
-                rec.annual_working_days = rec.annual_working_days or config.annual_working_days
-                rec.monthly_working_days = rec.monthly_working_days or config.monthly_working_days
-                rec.interest_rate = rec.interest_rate or config.interest_rate_percent
-                rec.labor_salary_monthly = rec.labor_salary_monthly or config.labor_salary_monthly_config
-                rec.machine_price = rec.machine_price or config.machine_price_config
-                rec.loan_amount = rec.loan_amount or config.loan_amount_config
-                rec.last_10m_rm_total = rec.last_10m_rm_total or config.last_10m_rm_total_config
-                rec.loading_cost_per_quintal_input = rec.loading_cost_per_quintal_input or config.loading_cost_per_quintal_input_config
+                # Always override with config values, not just if empty
+                rec.total_quintal_daily = config.daily_produced_q
+                rec.annual_working_days = config.annual_working_days
+                rec.monthly_working_days = config.monthly_working_days
+                rec.interest_rate = config.interest_rate_percent
+                rec.labor_salary_monthly = config.labor_salary_monthly_config
+                rec.machine_price = config.machine_price_config
+                rec.loan_amount = config.loan_amount_config
+                rec.last_10m_rm_total = config.last_10m_rm_total_config
+                rec.loading_cost_per_quintal_input = config.loading_cost_per_quintal_input_config
 
             if rec.name == 'New':
                 rec.name = self.env['ir.sequence'].next_by_code('feed.estimation') or '/'
@@ -149,15 +150,57 @@ class FeedEstimation(models.Model):
            This is client-side and won't persist unless the user saves the record."""
         for rec in self:
             if rec.formula_id:
-                lines_to_set = []
-                for fl in rec.formula_id.line_ids:
-                    lines_to_set.append((0, 0, {
-                        'type': fl.type,
-                        'product_id': fl.product_id.id,
-                        'input_kg': fl.input_kg,
-                        'price_per_kg': fl.price_per_kg,
-                    }))
-                rec.line_ids = lines_to_set
+                # If estimation already has lines, update them instead of adding new ones
+                if rec.line_ids:
+                    # Map existing lines by product for updating
+                    existing_lines = {}
+                    for line in rec.line_ids:
+                        if line.product_id:
+                            existing_lines[line.product_id.id] = line
+                    
+                    # Update existing lines with formula data
+                    lines_to_update = []
+                    for fl in rec.formula_id.line_ids:
+                        if fl.product_id.id in existing_lines:
+                            # Update existing line
+                            existing_lines[fl.product_id.id].update({
+                                'type': fl.type,
+                                'input_kg': fl.input_kg,
+                                'price_per_kg': fl.price_per_kg,
+                            })
+                            lines_to_update.append(existing_lines[fl.product_id.id])
+                    
+                    # Remove lines that are not in new formula
+                    lines_to_remove = [line for line in rec.line_ids 
+                                     if line.product_id and line.product_id.id not in [fl.product_id.id for fl in rec.formula_id.line_ids]]
+                    if lines_to_remove:
+                        rec.line_ids = [(2, line.id) for line in lines_to_remove]
+                    
+                    # Add new lines for products not in existing
+                    existing_product_ids = [line.product_id.id for line in rec.line_ids if line.product_id]
+                    new_formula_product_ids = [fl.product_id.id for fl in rec.formula_id.line_ids]
+                    new_products = [fl for fl in rec.formula_id.line_ids 
+                                  if fl.product_id.id not in existing_product_ids]
+                    
+                    if new_products:
+                        for fl in new_products:
+                            rec.line_ids = [(0, 0, {
+                                'type': fl.type,
+                                'product_id': fl.product_id.id,
+                                'input_kg': fl.input_kg,
+                                'price_per_kg': fl.price_per_kg,
+                            })]
+                else:
+                    # No existing lines, create new ones from formula
+                    lines_to_set = []
+                    for fl in rec.formula_id.line_ids:
+                        lines_to_set.append((0, 0, {
+                            'type': fl.type,
+                            'product_id': fl.product_id.id,
+                            'input_kg': fl.input_kg,
+                            'price_per_kg': fl.price_per_kg,
+                        }))
+                    rec.line_ids = lines_to_set
 
 
 
