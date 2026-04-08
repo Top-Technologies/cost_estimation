@@ -143,6 +143,26 @@ class FeedEstimation(models.Model):
                     rec.line_ids = lines_to_create
         return records
     
+    def write(self, vals):
+        # Check if config_id is being updated
+        if 'config_id' in vals and vals['config_id']:
+            config = self.env['feed.config'].browse(vals['config_id'])
+            if config:
+                # Update config-related fields when config changes
+                vals.update({
+                    'total_quintal_daily': config.daily_produced_q,
+                    'annual_working_days': config.annual_working_days,
+                    'monthly_working_days': config.monthly_working_days,
+                    'interest_rate': config.interest_rate_percent,
+                    'labor_salary_monthly': config.labor_salary_monthly_config,
+                    'machine_price': config.machine_price_config,
+                    'loan_amount': config.loan_amount_config,
+                    'last_10m_rm_total': config.last_10m_rm_total_config,
+                    'loading_cost_per_quintal_input': config.loading_cost_per_quintal_input_config,
+                })
+        
+        return super().write(vals)
+    
     
     @api.onchange('formula_id')
     def _onchange_formula(self):
