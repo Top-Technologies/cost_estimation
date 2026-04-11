@@ -1,6 +1,5 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
-
 
 
 class FeedEstimation(models.Model):
@@ -19,13 +18,56 @@ class FeedEstimation(models.Model):
         required=True,
         tracking=True
     )
+    reported_by = fields.Many2one(
+        'res.users',
+        string='Reported By',
+        default=lambda self: self.env.user,
+        readonly=True,
+        tracking=True
+    )
     company_id = fields.Many2one(
         'res.company', string='Company', default=lambda self: self.env.company)
     currency_id = fields.Many2one(
         'res.currency', string='Currency', default=lambda self: self.env.company.currency_id)
     date = fields.Date(default=fields.Date.context_today)
     state = fields.Selection(
-        [('draft', 'Draft'), ('computed', 'Computed')], default='draft')
+        [
+            ('draft', 'Draft'),
+            ('computed', 'Computed'),
+            ('submitted', 'Submitted'),
+            ('needs_update', 'Needs Update'),
+            ('approved', 'Approved')
+        ],
+        default='draft',
+        tracking=True
+    )
+    # Approval fields
+    user_id = fields.Many2one('res.users', string='Created By', default=lambda self: self.env.user, tracking=True, readonly=True)
+    approver_id = fields.Many2one('res.users', string='Approver', readonly=True, tracking=True)
+    approval_date = fields.Datetime(string='Approval Date', readonly=True, tracking=True)
+    responsible_user_id = fields.Many2one('res.users', string='Responsible User', tracking=True, help='User responsible for approval')
+
+
+    is_editable = fields.Boolean(
+        string="Editable",
+        default=True
+    )
+
+    is_reporter = fields.Boolean(
+    compute="_compute_is_reporter",
+    store=False
+    )
+
+    is_responsible = fields.Boolean(
+        compute="_compute_is_responsible",
+        store=False
+    )
+
+    was_submitted = fields.Boolean(
+        string="Was Submitted",
+        default=False
+    )
+
 
     # configurable but copied from config on create
     total_quintal_daily = fields.Float(
@@ -58,9 +100,10 @@ class FeedEstimation(models.Model):
 
     line_ids = fields.One2many(
         'feed.estimation.line', 'estimation_id', string='Materials', tracking=True)
-    
+
     # fuel total
-    fuel_total = fields.Monetary(string='Fuel Total', compute='_compute_totals', store=True, currency_field='currency_id')
+    fuel_total = fields.Monetary(
+        string='Fuel Total', compute='_compute_totals', store=True, currency_field='currency_id')
 
     # Computed totals
     raw_material_total = fields.Monetary(
@@ -104,35 +147,48 @@ class FeedEstimation(models.Model):
         store=True
     )
 
+    responsible_user = fields.Many2many(
+        'res.users',
+        string='Responsible Users',
+        required=True
+    )
+
     def _get_annual_produced_quintal(self, rec):
         return (rec.total_quintal_daily or 0.0) * (rec.annual_working_days or 1)
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Override create to handle default values and add creator as follower"""
         records = super().create(vals_list)
-        for rec in records:
+        
+        for record in records:
+            # Add creator as follower
+            if record.user_id and record.user_id.partner_id.id not in record.message_follower_ids.partner_id.ids:
+                record.message_subscribe(partner_ids=[record.user_id.partner_id.id])
+            
             # copy defaults from config - override defaults with config values
-            config = rec.config_id
+            config = record.config_id
 
             if config:
                 # Always override with config values, not just if empty
-                rec.total_quintal_daily = config.daily_produced_q
-                rec.annual_working_days = config.annual_working_days
-                rec.monthly_working_days = config.monthly_working_days
-                rec.interest_rate = config.interest_rate_percent
-                rec.labor_salary_monthly = config.labor_salary_monthly_config
-                rec.machine_price = config.machine_price_config
-                rec.loan_amount = config.loan_amount_config
-                rec.last_10m_rm_total = config.last_10m_rm_total_config
-                rec.loading_cost_per_quintal_input = config.loading_cost_per_quintal_input_config
+                record.total_quintal_daily = config.daily_produced_q
+                record.annual_working_days = config.annual_working_days
+                record.monthly_working_days = config.monthly_working_days
+                record.interest_rate = config.interest_rate_percent
+                record.labor_salary_monthly = config.labor_salary_monthly_config
+                record.machine_price = config.machine_price_config
+                record.loan_amount = config.loan_amount_config
+                record.last_10m_rm_total = config.last_10m_rm_total_config
+                record.loading_cost_per_quintal_input = config.loading_cost_per_quintal_input_config
 
-            if rec.name == 'New':
-                rec.name = self.env['ir.sequence'].next_by_code('feed.estimation') or '/'
-                
+            if record.name == 'New':
+                record.name = self.env['ir.sequence'].next_by_code(
+                    'feed.estimation') or '/'
+
             # If formula has components and estimation has no manual lines, populate lines from formula (copy)
-            if rec.formula_id and not rec.line_ids:
+            if record.formula_id and not record.line_ids:
                 lines_to_create = []
-                for fl in rec.formula_id.line_ids:
+                for fl in record.formula_id.line_ids:
                     lines_to_create.append((0, 0, {
                         'type': fl.type,
                         'product_id': fl.product_id.id,
@@ -140,9 +196,9 @@ class FeedEstimation(models.Model):
                         'price_per_kg': fl.price_per_kg,
                     }))
                 if lines_to_create:
-                    rec.line_ids = lines_to_create
+                    record.line_ids = lines_to_create
         return records
-    
+
     def write(self, vals):
         # Check if config_id is being updated
         if 'config_id' in vals and vals['config_id']:
@@ -160,10 +216,9 @@ class FeedEstimation(models.Model):
                     'last_10m_rm_total': config.last_10m_rm_total_config,
                     'loading_cost_per_quintal_input': config.loading_cost_per_quintal_input_config,
                 })
-        
+
         return super().write(vals)
-    
-    
+
     @api.onchange('formula_id')
     def _onchange_formula(self):
         """When user selects a formula in the Estimation form, prefill lines from formula.
@@ -177,7 +232,7 @@ class FeedEstimation(models.Model):
                     for line in rec.line_ids:
                         if line.product_id:
                             existing_lines[line.product_id.id] = line
-                    
+
                     # Update existing lines with formula data
                     lines_to_update = []
                     for fl in rec.formula_id.line_ids:
@@ -188,20 +243,24 @@ class FeedEstimation(models.Model):
                                 'input_kg': fl.input_kg,
                                 'price_per_kg': fl.price_per_kg,
                             })
-                            lines_to_update.append(existing_lines[fl.product_id.id])
-                    
+                            lines_to_update.append(
+                                existing_lines[fl.product_id.id])
+
                     # Remove lines that are not in new formula
-                    lines_to_remove = [line for line in rec.line_ids 
-                                     if line.product_id and line.product_id.id not in [fl.product_id.id for fl in rec.formula_id.line_ids]]
+                    lines_to_remove = [line for line in rec.line_ids
+                                       if line.product_id and line.product_id.id not in [fl.product_id.id for fl in rec.formula_id.line_ids]]
                     if lines_to_remove:
-                        rec.line_ids = [(2, line.id) for line in lines_to_remove]
-                    
+                        rec.line_ids = [(2, line.id)
+                                        for line in lines_to_remove]
+
                     # Add new lines for products not in existing
-                    existing_product_ids = [line.product_id.id for line in rec.line_ids if line.product_id]
-                    new_formula_product_ids = [fl.product_id.id for fl in rec.formula_id.line_ids]
-                    new_products = [fl for fl in rec.formula_id.line_ids 
-                                  if fl.product_id.id not in existing_product_ids]
-                    
+                    existing_product_ids = [
+                        line.product_id.id for line in rec.line_ids if line.product_id]
+                    new_formula_product_ids = [
+                        fl.product_id.id for fl in rec.formula_id.line_ids]
+                    new_products = [fl for fl in rec.formula_id.line_ids
+                                    if fl.product_id.id not in existing_product_ids]
+
                     if new_products:
                         for fl in new_products:
                             rec.line_ids = [(0, 0, {
@@ -222,8 +281,6 @@ class FeedEstimation(models.Model):
                         }))
                     rec.line_ids = lines_to_set
 
-
-
     @api.onchange('config_id')
     def _onchange_load_config(self):
 
@@ -242,7 +299,6 @@ class FeedEstimation(models.Model):
                 rec.last_10m_rm_total = config.last_10m_rm_total_config
                 rec.loading_cost_per_quintal_input = config.loading_cost_per_quintal_input_config
 
-
     @api.model
     def default_get(self, fields_list):
 
@@ -258,7 +314,6 @@ class FeedEstimation(models.Model):
 
         return res
 
-
     @api.depends('line_ids.total_cost', 'labor_salary_monthly', 'machine_price', 'loan_amount', 'interest_rate', 'last_10m_rm_total', 'total_quintal_daily', 'annual_working_days', 'monthly_working_days', 'loading_cost_per_quintal_input')
     def _compute_totals(self):
         for rec in self:
@@ -267,7 +322,8 @@ class FeedEstimation(models.Model):
                 l.total_cost for l in rec.line_ids if l.type == 'raw')
             pack_total = sum(
                 l.total_cost for l in rec.line_ids if l.type == 'pack')
-            fuel_total = sum(l.total_cost for l in rec.line_ids if l.type == 'fuel')
+            fuel_total = sum(
+                l.total_cost for l in rec.line_ids if l.type == 'fuel')
 
             # Apply 2% waste adjustment to raw materials (raw_total_adjusted = raw_total / 0.98)
             # Guard division by zero (0.98 is constant > 0)
@@ -327,12 +383,15 @@ class FeedEstimation(models.Model):
             # NOTE: raw_total_adjusted, pack_total and fuel_total are totals (currency) for the batch/month as entered.
             # The Excel logic originally divided raw+pack by annual produced quintal to get per-Q; here we do same with annual produced Q.
             annual_produced_q = self._get_annual_produced_quintal(rec) or 1.0
-            rm_pack_fuel_total_adjusted = (raw_total_adjusted + pack_total + fuel_total)
+            rm_pack_fuel_total_adjusted = (
+                raw_total_adjusted + pack_total + fuel_total)
             rm_pack_fuel_per_q = (rm_pack_fuel_total_adjusted)
 
-            total_per_q = (rm_pack_fuel_per_q or 0.0) + (rec.labor_cost_per_quintal or 0.0) + (rec.depreciation_per_quintal or 0.0) + (rec.interest_per_quintal or 0.0) + (rec.other_cost_per_quintal or 0.0) + (rec.loading_cost_per_quintal or 0.0)
+            total_per_q = (rm_pack_fuel_per_q or 0.0) + (rec.labor_cost_per_quintal or 0.0) + (rec.depreciation_per_quintal or 0.0) + (
+                rec.interest_per_quintal or 0.0) + (rec.other_cost_per_quintal or 0.0) + (rec.loading_cost_per_quintal or 0.0)
             rec.total_cost_per_quintal = total_per_q
             rec.total_cost_per_quintal = total_per_q
+
     @api.depends('total_cost_per_quintal', 'margin_percent')
     def _compute_margin_analysis(self):
         for rec in self:
@@ -362,6 +421,60 @@ class FeedEstimation(models.Model):
             rec._compute_totals()
             rec.state = 'computed'
 
+    def action_submit(self):
+        """Submit for approval"""
+        if not self.responsible_user_id:
+            raise UserError('Please select a responsible user for approval.')
+        
+        self.state = 'submitted'
+        
+        # Add responsible user as follower to ensure they receive activities
+        if self.responsible_user_id.partner_id.id not in self.message_follower_ids.partner_id.ids:
+            self.message_subscribe(partner_ids=[self.responsible_user_id.partner_id.id])
+        
+        # Schedule activity for responsible user
+        self.activity_schedule(
+            'mail.mail_activity_data_todo',
+            user_id=self.responsible_user_id.id,
+            summary=f'Feed Estimation {self.name} - Approval Required',
+            note=f'Feed Estimation {self.name} has been submitted for your approval. Please review and approve or reject the estimation.'
+        )
+
+    def action_approve(self):
+        """Approve the estimation"""
+        if self.responsible_user_id != self.env.user:
+            raise UserError('Only the responsible user can approve this estimation.')
+        
+        self.write({
+            'state': 'approved',
+            'approver_id': self.env.user.id,
+            'approval_date': fields.Datetime.now()
+        })
+        
+        # Schedule activity for creator
+        self.activity_schedule(
+            'mail.mail_activity_data_todo',
+            user_id=self.user_id.id,
+            summary=f'Feed Estimation {self.name} - Approved',
+            note=f'Your Feed Estimation {self.name} has been approved by {self.env.user.name}. Approval Date: {fields.Datetime.now()}'
+        )
+
+    def action_reject(self):
+        """Reject the estimation and send back for update"""
+        if self.responsible_user_id != self.env.user:
+            raise UserError('Only the responsible user can reject this estimation.')
+        
+        self.state = 'needs_update'
+        
+        # Schedule activity for creator
+        self.activity_schedule(
+            'mail.mail_activity_data_todo',
+            user_id=self.user_id.id,
+            summary=f'Feed Estimation {self.name} - Needs Update',
+            note=f'Your Feed Estimation {self.name} has been rejected and needs updates. Rejected by: {self.responsible_user_id.name}. Date: {fields.Datetime.now()}'
+        )
+
     def action_reset_to_draft(self):
         for rec in self:
             rec.state = 'draft'
+        

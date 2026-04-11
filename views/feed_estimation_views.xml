@@ -23,19 +23,59 @@
     <field name="model">feed.estimation</field>
     <field name="arch" type="xml">
       <form>
+        <header>
+            <!-- Compute Button -->
+            <button name="action_compute"
+                    type="object"
+                    string="Compute"
+                    class="btn-primary"
+                    invisible="state != 'draft'"/>
+            
+            <!-- Submit Button -->
+            <button name="action_submit"
+                    type="object"
+                    string="Submit for Approval"
+                    class="btn-primary"
+                    invisible="state != 'computed'"/>
+            
+            <!-- Approve Button -->
+            <button name="action_approve"
+                    type="object"
+                    string="Approve"
+                    class="btn-success"
+                    invisible="state != 'submitted'"/>
+            
+            <!-- Reject Button -->
+            <button name="action_reject"
+                    type="object"
+                    string="Reject"
+                    class="btn-danger"
+                    invisible="state != 'submitted'"/>
+            
+            <!-- Reset to Draft -->
+            <button name="action_reset_to_draft"
+                    type="object"
+                    string="Reset to Draft"
+                    class="btn-secondary"
+                    invisible="state in ('draft', 'approved')"/>
+            
+            <field name="state" widget="statusbar" statusbar_visible="draft,computed,submitted,needs_update,approved"/>
+        </header>
         <sheet>
           <group>
             <field name="name"/>
-            <field name="formula_id"/>
-            <field name="config_id"/>
+            <field name="formula_id" readonly="state == 'submitted' or state == 'approved'"/>
+            <field name="config_id" readonly="state == 'submitted' or state == 'approved'"/>
             <field name="date"/>
-            <!-- <field name="company_id"/> -->
-            <field name="state"/>
+            <field name="user_id" readonly="1"/>
+            <field name="responsible_user_id" readonly="state == 'submitted' or state == 'approved'"/>
+            <field name="approver_id" readonly="1"/>
+            <field name="approval_date" readonly="1"/>
           </group>
 
           <notebook>
             <page string="Lines">
-              <field name="line_ids">
+              <field name="line_ids" readonly="state == 'submitted' or state == 'approved'">
                 <list editable="bottom">
                   <field name="company_currency_id" column_invisible="True"/>
                   <field name="type"/>
@@ -48,15 +88,15 @@
             </page>
             <page string="Inputs &amp; Assumptions">
               <group>
-                <field name="total_quintal_daily" readonly="1"/>
-                <field name="annual_working_days" readonly="1"/>
-                <field name="monthly_working_days" readonly="1"/>
-                <field name="labor_salary_monthly" readonly="1"/>
-                <field name="machine_price" readonly="1"/>
-                <field name="loan_amount" readonly="1"/>
-                <field name="interest_rate" readonly="1"/>
-                <field name="last_10m_rm_total" readonly="1"/>
-                <field name="loading_cost_per_quintal_input" readonly="1"/>
+                <field name="total_quintal_daily" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="annual_working_days" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="monthly_working_days" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="labor_salary_monthly" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="machine_price" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="loan_amount" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="interest_rate" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="last_10m_rm_total" readonly="state == 'submitted' or state == 'approved'"/>
+                <field name="loading_cost_per_quintal_input" readonly="state == 'submitted' or state == 'approved'"/>
               </group>
             </page>
             <page string="Summary">
@@ -77,18 +117,12 @@
             <page string="Selling Margin Analysis">
               <group>
                 <field name="cost_for_margin" readonly="1"/>
-                <field name="margin_percent"/>
+                <field name="margin_percent" readonly="state == 'submitted' or state == 'approved'"/>
                 <field name="profit_amount" readonly="1"/>
                 <field name="selling_price" readonly="1"/>
               </group>
             </page>
           </notebook>
-
-          <footer>
-            <button string="Compute" type="object" name="action_compute" class="btn-primary"/>
-            <button string="Reset" type="object" name="action_reset_to_draft"/>
-            <button string="Print Report" type="action" name="%(action_feed_estimation_report)d"/>
-          </footer>
         </sheet>
         <chatter>
             <field name="message_follower_ids"/>
