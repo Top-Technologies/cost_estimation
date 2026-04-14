@@ -20,6 +20,35 @@ class FeedFormulaLine(models.Model):
     total_cost = fields.Monetary(string='Total Cost', compute='_compute_total', store=True, currency_field='company_currency_id')
     company_currency_id = fields.Many2one('res.currency', string='Currency', related='formula_id.company_id.currency_id', readonly=True)
 
+    def _get_most_recent_purchase_price(self, product):
+        """
+        Get the most recent purchase order unit price for a product
+        Only consider POs where the product has been received in inventory
+        """
+        if not product:
+            return 0.0
+        
+        # Search for purchase order lines with received stock moves
+        self.env.cr.execute("""
+            SELECT pol.price_unit
+            FROM purchase_order_line pol
+            JOIN purchase_order po ON pol.order_id = po.id
+            JOIN stock_move sm ON sm.purchase_line_id = pol.id
+            WHERE pol.product_id = %s
+              AND sm.state = 'done'
+              AND po.state IN ('purchase', 'done')
+              AND pol.price_unit > 0
+            ORDER BY po.date_approve DESC, po.id DESC
+            LIMIT 1
+        """, (product.id,))
+        
+        result = self.env.cr.fetchone()
+        if result:
+            return result[0]
+        
+        # Fallback to standard cost if no recent purchase found
+        return product.standard_price or 0.0
+
     @api.depends('input_kg','price_per_kg')
     def _compute_total(self):
         for rec in self:
@@ -27,7 +56,7 @@ class FeedFormulaLine(models.Model):
     
     @api.onchange('product_id')
     def _onchange_product(self):
-        """When product is selected, fetch its unit and price from product master data"""
+        """When product is selected, fetch its unit and price from most recent purchase order"""
         for line in self:
             if line.product_id:
                 # Fetch from product template
@@ -41,6 +70,6 @@ class FeedFormulaLine(models.Model):
                 else:
                     line.input_kg = 1.0
                 
-                # Get cost price from product template cost field (standard_price)
-                # This is the "Value of the product (automatically computed in AVCO)"
-                line.price_per_kg = product_template.standard_price or 0.0
+                # Get price from most recent purchase order with receipt
+                # Fallback to standard cost if no purchase found
+                line.price_per_kg = self._get_most_recent_purchase_price(line.product_id)
