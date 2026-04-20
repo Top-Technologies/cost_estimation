@@ -108,8 +108,8 @@
                 <field name="depreciation_per_quintal" readonly="1"/>
                 <field name="interest_per_quintal" readonly="1"/>
                 <field name="other_cost_per_quintal" readonly="1"/>
-                <field name="monthly_loading_cost" readonly="1"/>
-                <field name="daily_loading_cost" readonly="1"/>
+                <!-- <field name="monthly_loading_cost" readonly="1"/>
+                <field name="daily_loading_cost" readonly="1"/> -->
                 <field name="loading_cost_per_quintal" readonly="1"/>
                 <field name="total_cost_per_quintal" readonly="1"/>
               </group>

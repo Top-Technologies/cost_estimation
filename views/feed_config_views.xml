@@ -8,6 +8,7 @@
         <field name="name"/>
         <field name="company_id"/>
         <field name="daily_produced_q"/>
+        <field name="standard_machine_capacity_q_per_day"/>
         <field name="annual_working_days" optional="hide"/>
         <field name="labor_salary_monthly_config" optional="hide"/>
         <field name="loan_amount_config"/>
@@ -30,6 +31,7 @@
             <field name="name"/>
             <field name="company_id"/>
             <field name="daily_produced_q"/>
+            <field name="standard_machine_capacity_q_per_day"/>
             <field name="annual_working_days"/>
             <field name="monthly_working_days"/>
             <field name="labor_salary_monthly_config"/>

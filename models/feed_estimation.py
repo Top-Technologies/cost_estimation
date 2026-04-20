@@ -71,7 +71,9 @@ class FeedEstimation(models.Model):
 
     # configurable but copied from config on create
     total_quintal_daily = fields.Float(
-        string='Daily Produced', default=170.0)
+        string='Daily Produced', default=400.0)
+    standard_machine_capacity_q_per_day = fields.Float(
+        string='Standard Machine Capacity (Q/day)', default=1800)
     annual_working_days = fields.Integer(
         string='Annual Working Days', default=313)
     monthly_working_days = fields.Integer(
@@ -86,7 +88,7 @@ class FeedEstimation(models.Model):
     interest_rate = fields.Float(
         string='Interest Rate (annual %)', default=0.0)
     last_10m_rm_total = fields.Monetary(
-        string='Last 10-month Repair & Maintenance Total', currency_field='currency_id')
+        string='Repair & Maintenance Total', currency_field='currency_id')
 
     # Loading cost input (per quintal) - user gives loading cost per Q (currency/Q)
     loading_cost_per_quintal_input = fields.Monetary(
@@ -172,6 +174,7 @@ class FeedEstimation(models.Model):
             if config:
                 # Always override with config values, not just if empty
                 record.total_quintal_daily = config.daily_produced_q
+                record.standard_machine_capacity_q_per_day = config.standard_machine_capacity_q_per_day
                 record.annual_working_days = config.annual_working_days
                 record.monthly_working_days = config.monthly_working_days
                 record.interest_rate = config.interest_rate_percent
@@ -207,6 +210,7 @@ class FeedEstimation(models.Model):
                 # Update config-related fields when config changes
                 vals.update({
                     'total_quintal_daily': config.daily_produced_q,
+                    'standard_machine_capacity_q_per_day': config.standard_machine_capacity_q_per_day,
                     'annual_working_days': config.annual_working_days,
                     'monthly_working_days': config.monthly_working_days,
                     'interest_rate': config.interest_rate_percent,
@@ -290,6 +294,7 @@ class FeedEstimation(models.Model):
                 config = rec.config_id
 
                 rec.total_quintal_daily = config.daily_produced_q
+                rec.standard_machine_capacity_q_per_day = config.standard_machine_capacity_q_per_day
                 rec.annual_working_days = config.annual_working_days
                 rec.monthly_working_days = config.monthly_working_days
                 rec.interest_rate = config.interest_rate_percent
@@ -314,7 +319,7 @@ class FeedEstimation(models.Model):
 
         return res
 
-    @api.depends('line_ids.total_cost', 'labor_salary_monthly', 'machine_price', 'loan_amount', 'interest_rate', 'last_10m_rm_total', 'total_quintal_daily', 'annual_working_days', 'monthly_working_days', 'loading_cost_per_quintal_input')
+    @api.depends('line_ids.total_cost', 'labor_salary_monthly', 'machine_price', 'loan_amount', 'interest_rate', 'last_10m_rm_total', 'total_quintal_daily', 'annual_working_days', 'monthly_working_days', 'loading_cost_per_quintal_input', 'standard_machine_capacity_q_per_day')
     def _compute_totals(self):
         for rec in self:
             # Sum lines
@@ -346,7 +351,8 @@ class FeedEstimation(models.Model):
             dep_percent = (config.depreciation_percent or 20.0) / 100.0
             total_depr_amount = (rec.machine_price or 0.0) * dep_percent
             annual_produced_q = self._get_annual_produced_quintal(rec) or 1.0
-            depr_per_q = (total_depr_amount / annual_produced_q)
+            dep_pre = (rec.total_quintal_daily or 0.0) / (rec.standard_machine_capacity_q_per_day or 1.0)
+            depr_per_q = (total_depr_amount * dep_pre) / annual_produced_q
             rec.depreciation_per_quintal = depr_per_q
 
             # Interest

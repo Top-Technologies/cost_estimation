@@ -16,7 +16,9 @@ class FeedConfig(models.Model):
                               default=lambda self: self.env.company.currency_id)
 
     daily_produced_q = fields.Float(
-        string='Daily Produced',tracking=True, default=170.0)
+        string='Daily Produced',tracking=True, default=400.0)
+    standard_machine_capacity_q_per_day = fields.Float(
+        string='Standard Machine Capacity (Q/day)',tracking=True, default=1800)
     annual_working_days = fields.Integer(
         string='Annual Working Days',tracking=True, default=313)
     monthly_working_days = fields.Integer(
