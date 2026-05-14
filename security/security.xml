@@ -1,13 +1,29 @@
 <?xml version="1.0"?>
 <odoo>
     <data>
+
+        <!-- Module Category -->
+        <record id="module_category_feed_cost" model="ir.module.category">
+            <field name="name">Feed Cost Estimation</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- Feed User -->
         <record id="group_feed_user" model="res.groups">
-            <field name="name">Feed Cost User</field>
-            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="name">User</field>
+            <field name="category_id"
+                   ref="cost_estimation.module_category_feed_cost"/>
         </record>
+
+        <!-- Feed Manager -->
         <record id="group_feed_manager" model="res.groups">
-            <field name="name">Feed Cost Manager</field>
-            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="name">Manager</field>
+            <field name="category_id"
+                   ref="cost_estimation.module_category_feed_cost"/>
+
+            <field name="implied_ids"
+                   eval="[(4, ref('cost_estimation.group_feed_user'))]"/>
         </record>
+
     </data>
 </odoo>

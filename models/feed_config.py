@@ -36,8 +36,8 @@ class FeedConfig(models.Model):
         string='Last 10-month Repair & Maintenance Total',tracking=True, currency_field='currency_id')
     loading_cost_per_quintal_input_config = fields.Monetary(
         string='Loading Cost / Q (input)', tracking=True, currency_field='currency_id', help='User-provided loading cost per quintal (currency per Q)')
-    allow_config_edit_group_id = fields.Many2one(
-        'res.groups', string='Group who can edit', tracking=True)
+    # allow_config_edit_group_id = fields.Many2one(
+    #     'res.groups', string='Group who can edit', tracking=True)
     is_default = fields.Boolean(string='Default')
     # _sql_constraints = [
     #     ('company_uniq', 'unique(company_id)',

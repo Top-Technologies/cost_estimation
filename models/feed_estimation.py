@@ -396,7 +396,6 @@ class FeedEstimation(models.Model):
             total_per_q = (rm_pack_fuel_per_q or 0.0) + (rec.labor_cost_per_quintal or 0.0) + (rec.depreciation_per_quintal or 0.0) + (
                 rec.interest_per_quintal or 0.0) + (rec.other_cost_per_quintal or 0.0) + (rec.loading_cost_per_quintal or 0.0)
             rec.total_cost_per_quintal = total_per_q
-            rec.total_cost_per_quintal = total_per_q
 
     @api.depends('total_cost_per_quintal', 'margin_percent')
     def _compute_margin_analysis(self):

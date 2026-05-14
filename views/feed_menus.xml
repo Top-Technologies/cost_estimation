@@ -7,6 +7,10 @@
 
     <menuitem id="menu_feed_estimation" name="Estimations" parent="menu_manufacturing_root" sequence="5"/>
     <menuitem id="menu_feed_formula" name="Formulas" parent="menu_manufacturing_root" sequence="10"/>
-    <menuitem id="menu_feed_config" name="Configuration" parent="menu_manufacturing_root" sequence="20"/>
+    <menuitem id="menu_feed_config"
+          name="Configuration"
+          parent="menu_manufacturing_root"
+          sequence="20"
+          groups="cost_estimation.group_feed_manager"/>
   </data>
 </odoo>

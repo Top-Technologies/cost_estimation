@@ -41,7 +41,7 @@
             <field name="loan_amount_config"/>
             <field name="last_10m_rm_total_config"/>
             <field name="loading_cost_per_quintal_input_config"/>
-            <field name="allow_config_edit_group_id"/>
+            <!-- <field name="allow_config_edit_group_id"/> -->
           </group>
         </sheet>
         <chatter>
