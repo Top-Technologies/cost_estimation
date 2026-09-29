@@ -6,3 +6,4 @@ access_feed_formula,access_feed_formula,model_feed_formula,cost_estimation.group
 access_feed_formula_line,access_feed_formula_line,model_feed_formula_line,cost_estimation.group_feed_user,1,1,1,1
 access_feed_estimation,access_feed_estimation,model_feed_estimation,cost_estimation.group_feed_user,1,1,1,1
 access_feed_line,access_feed_line,model_feed_estimation_line,cost_estimation.group_feed_user,1,1,1,1
+access_feed_reporting,access_feed_reporting,model_feed_reporting,cost_estimation.group_feed_manager,1,1,1,1

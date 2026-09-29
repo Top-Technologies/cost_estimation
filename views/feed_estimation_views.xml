@@ -9,10 +9,10 @@
         <field name="name"/>
         <field name="formula_id"/>
         <field name="date"/>
-        <field name="total_cost_per_quintal"/>
-        <field name="margin_percent" optional="show"/>
-        <field name="profit_amount" optional="show"/>
-        <field name="selling_price" optional="show"/>
+        <field name="total_cost_per_quintal" groups="cost_estimation.group_feed_manager"/>
+        <field name="margin_percent" optional="show" groups="cost_estimation.group_feed_manager"/>
+        <field name="profit_amount" optional="show" groups="cost_estimation.group_feed_manager"/>
+        <field name="selling_price" optional="show" groups="cost_estimation.group_feed_manager"/>
         <field name="state"/>
       </list>
     </field>
@@ -65,7 +65,7 @@
           <group>
             <field name="name"/>
             <field name="formula_id" readonly="state == 'submitted' or state == 'approved'"/>
-            <field name="config_id" readonly="state == 'submitted' or state == 'approved'"/>
+            <field name="config_id" readonly="state == 'submitted' or state == 'approved'" groups="cost_estimation.group_feed_manager"/>
             <field name="date"/>
             <field name="user_id" readonly="1"/>
             <field name="responsible_user_id" readonly="state == 'submitted' or state == 'approved'"/>
@@ -86,7 +86,7 @@
                 </list>
               </field>
             </page>
-            <page string="Inputs &amp; Assumptions">
+            <page string="Inputs &amp; Assumptions" groups="cost_estimation.group_feed_manager">
               <group>
                 <field name="total_quintal_daily" readonly="state == 'submitted' or state == 'approved'"/>
                 <field name="annual_working_days" readonly="state == 'submitted' or state == 'approved'"/>
@@ -99,7 +99,7 @@
                 <field name="loading_cost_per_quintal_input" readonly="state == 'submitted' or state == 'approved'"/>
               </group>
             </page>
-            <page string="Summary">
+            <page string="Summary" groups="cost_estimation.group_feed_manager">
               <group>
                 <field name="raw_material_total" readonly="1"/>
                 <field name="fuel_total" readonly="1"/>
@@ -114,7 +114,7 @@
                 <field name="total_cost_per_quintal" readonly="1"/>
               </group>
             </page>
-            <page string="Selling Margin Analysis">
+            <page string="Selling Margin Analysis" groups="cost_estimation.group_feed_manager">
               <group>
                 <field name="cost_for_margin" readonly="1"/>
                 <field name="margin_percent" readonly="state == 'submitted' or state == 'approved'"/>
@@ -136,7 +136,7 @@
   <record id="action_feed_estimation" model="ir.actions.act_window">
     <field name="name">Estimations</field>
     <field name="res_model">feed.estimation</field>
-    <field name="view_mode">list,form</field>
+    <field name="view_mode">list,form,kanban,pivot,graph</field>
   </record>
 
   <menuitem id="menu_feed_estimation_action" name="Estimations" parent="menu_feed_estimation" action="action_feed_estimation"/>

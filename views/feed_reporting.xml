@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_feed_estimation_graph" model="ir.ui.view">
+            <field name="name">feed.estimation.graph</field>
+            <field name="model">feed.estimation</field>
+            <field name="arch" type="xml">
+                <graph string="Cost Estimation Analysis" type="bar" sample="1">
+                    <field name="name" type="row"/>
+                    <field name="selling_price" type="measure"/>
+                    <field name="profit_amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <record id="view_feed_estimation_pivot" model="ir.ui.view">
+            <field name="name">feed.estimation.pivot</field>
+            <field name="model">feed.estimation</field>
+            <field name="arch" type="xml">
+                <pivot string="Cost Estimation Analysis" sample="1">
+                    <field name="name" type="row"/>
+                    <field name="date" interval="month" type="col"/>
+                    <field name="selling_price" type="measure"/>
+                    <field name="profit_amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="action_feed_estimation_analysis_view" model="ir.actions.act_window">
+            <field name="name">Cost Estimation Analysis</field>
+            <field name="res_model">feed.estimation</field>
+            <field name="view_mode">graph,pivot,list,form</field>
+            <field name="view_id" ref="view_feed_estimation_graph"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No estimation data found to analyze!
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
